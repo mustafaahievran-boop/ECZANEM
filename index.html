@@ -40,7 +40,7 @@
 </div>
 
 <script>
-    // ANAHTARIN (Başına apikey eklenmiş haliyle)
+    // API ANAHTARINIZ (CollectAPI'den alınan güncel anahtar)
     const API_KEY = "apikey 4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6"; 
 
     const dateDiv = document.getElementById('today');
@@ -56,13 +56,25 @@
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
                     const data = await res.json();
-                    let city = data.address.province || data.address.city || "Kirsehir";
-                    // Türkçe karakter temizleme
-                    city = city.replace(/İ/g, 'i').replace(/I/g, 'i').replace(/Ş/g, 's').replace(/Ğ/g, 'g').replace(/Ü/g, 'u').replace(/Ö/g, 'o').replace(/Ç/g, 'c').toLowerCase();
+                    
+                    // Şehir bilgisini al ve Türkçe karakterleri API'ye uygun hale getir
+                    let rawCity = data.address.province || data.address.city || "kirsehir";
+                    let city = rawCity
+                        .replace(/İ/g, 'i').replace(/ı/g, 'i')
+                        .replace(/Ş/g, 's').replace(/ş/g, 's')
+                        .replace(/Ğ/g, 'g').replace(/ğ/g, 'g')
+                        .replace(/Ü/g, 'u').replace(/ü/g, 'u')
+                        .replace(/Ö/g, 'o').replace(/ö/g, 'o')
+                        .replace(/Ç/g, 'c').replace(/ç/g, 'c')
+                        .toLowerCase();
+                    
                     citySpan.innerText = city.toUpperCase();
                     fetchData(city);
                 } catch (e) { fetchData("kirsehir"); }
-            }, () => fetchData("kirsehir"));
+            }, () => {
+                citySpan.innerText = "KIRSEHIR (Varsayılan)";
+                fetchData("kirsehir");
+            });
         } else { fetchData("kirsehir"); }
     }
 
@@ -82,8 +94,11 @@
             const result = await response.json();
             loader.style.display = "none";
 
-            if (result.success && result.result) {
+            if (result.success && result.result && result.result.length > 0) {
                 result.result.forEach(e => {
+                    // Yol tarifi linkini düzelttim
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}`;
+                    
                     listDiv.innerHTML += `
                         <div class="card">
                             <h2>${e.name}</h2>
@@ -91,12 +106,12 @@
                             <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
                             <div class="btn-group">
                                 <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
-                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
+                                <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
                             </div>
                         </div>`;
                 });
             } else {
-                showError("Şu an veri alınamıyor. Aboneliğiniz henüz aktif olmamış olabilir.");
+                showError("Seçili şehir için şu an veri alınamıyor veya günlük limitiniz dolmuş olabilir.");
             }
         } catch (error) {
             loader.style.display = "none";
