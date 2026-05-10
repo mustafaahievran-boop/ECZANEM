@@ -1,47 +1,6 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nöbetçi Eczane Canlı</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --red: #d63031; --bg: #f5f6fa; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .app { max-width: 500px; margin: auto; }
-        header { text-align: center; color: var(--red); padding: 10px 0; }
-        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .city-name { background: var(--red); color: white; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
-        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
-        .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
-        .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold; font-size: 0.85rem; }
-        .btn-call { background: #27ae60; }
-        .btn-map { background: #2980b9; }
-        #loader { text-align: center; display: none; padding: 30px; color: var(--red); }
-        .error-card { background: #fff3f3; border: 1px solid #fab1a0; padding: 15px; border-radius: 10px; text-align: center; color: #c0392b; }
-    </style>
-</head>
-<body>
-
-<div class="app">
-    <header>
-        <h1><i class="fas fa-plus-square"></i> Nöbetçi Eczane</h1>
-        <div id="today" style="font-size: 0.9rem; color: #888;"></div>
-    </header>
-
-    <div class="status-badge">
-        📍 Şehir: <span id="currentCity" class="city-name">Tespit ediliyor...</span>
-    </div>
-
-    <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Sorgulanıyor...</div>
-    <div id="list"></div>
-</div>
-
 <script>
-    // API ANAHTARINIZ (CollectAPI'den alınan güncel anahtar)
-    const API_KEY = "apikey 4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6"; 
+    // YENİ ANAHTARIN (Eğer CollectAPI ise 'apikey ' ön eki zorunludur)
+    const API_KEY = "apikey 0304y1SR9u2lR0ltDXNw41L4uZTEvKuZH8zSdrMkc2QJU0O2B78mQKoxIwEF"; 
 
     const dateDiv = document.getElementById('today');
     const citySpan = document.getElementById('currentCity');
@@ -57,7 +16,6 @@
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
                     const data = await res.json();
                     
-                    // Şehir bilgisini al ve Türkçe karakterleri API'ye uygun hale getir
                     let rawCity = data.address.province || data.address.city || "kirsehir";
                     let city = rawCity
                         .replace(/İ/g, 'i').replace(/ı/g, 'i')
@@ -96,8 +54,8 @@
 
             if (result.success && result.result && result.result.length > 0) {
                 result.result.forEach(e => {
-                    // Yol tarifi linkini düzelttim
-                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}`;
+                    // Google Maps linkini daha güvenilir bir formata çevirdim
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address + ' ' + city)}`;
                     
                     listDiv.innerHTML += `
                         <div class="card">
@@ -111,24 +69,17 @@
                         </div>`;
                 });
             } else {
-                showError("Seçili şehir için şu an veri alınamıyor veya günlük limitiniz dolmuş olabilir.");
+                showError("Veri alınamadı. Anahtar geçersiz olabilir veya limitiniz dolmuş olabilir.");
             }
         } catch (error) {
             loader.style.display = "none";
-            showError("Bağlantı hatası! Lütfen internetinizi veya API anahtarınızı kontrol edin.");
+            showError("Bağlantı hatası!");
         }
     }
 
     function showError(msg) {
-        listDiv.innerHTML = `
-            <div class="error-card">
-                <i class="fas fa-exclamation-triangle fa-2x"></i><br><br>
-                <p>${msg}</p>
-                <a href="https://kirsehirism.saglik.gov.tr/TR,79610/nobetci-eczaneler.html" target="_blank" class="btn btn-map" style="display:inline-block; margin-top:10px;">RESMİ LİSTEYE GİT</a>
-            </div>`;
+        listDiv.innerHTML = `<div class="error-card"><p>${msg}</p></div>`;
     }
 
     init();
 </script>
-</body>
-</html>
