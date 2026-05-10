@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nöbetçi Eczane Listem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --red: #d63031; --bg: #f5f6fa; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .app { max-width: 500px; margin: auto; }
+        header { text-align: center; color: var(--red); padding: 20px 0; }
+        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
+        .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; text-transform: uppercase; }
+        .info { font-size: 0.9rem; color: #555; margin: 5px 0; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold; }
+        .btn-call { background: #27ae60; }
+        .btn-map { background: #2980b9; }
+        .update-bar { text-align: center; font-size: 0.8rem; color: #888; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header>
+        <h1><i class="fas fa-plus-medical"></i> Nöbetçi Eczaneler</h1>
+        <div id="today"></div>
+    </header>
+
+    <div class="update-bar">Veriler el ile güncellenmiştir.</div>
+    <div id="list"></div>
+</div>
+
+<script>
+    document.getElementById('today').innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    /* GÜNCELLEME BURADAN YAPILIR: 
+       Eczaneler değiştikçe buradaki bilgileri değiştirip GitHub'da "Commit" yapman yeterli.
+       API sınırı yok, hata yok, her zaman cebinde!
+    */
+    const eczaneler = [
+        {
+            ad: "ESEN ECZANESİ",
+            adres: "Kuşdilli Mah. 1302. Sk. No:5 (Eski Devlet Hastanesi Yanı)",
+            tel: "0386 213 41 41",
+            konum: "Kırşehir Esen Eczanesi"
+        },
+        {
+            ad: "YENİCE ECZANESİ",
+            adres: "Yenice Mah. 183. Sk. No:2/4 (Yenice Aile Sağlığı Merkezi Karşısı)",
+            tel: "0386 213 10 33",
+            konum: "Kırşehir Yenice Eczanesi"
+        }
+    ];
+
+    const listDiv = document.getElementById('list');
+    eczaneler.forEach(e => {
+        listDiv.innerHTML += `
+            <div class="card">
+                <h2>${e.ad}</h2>
+                <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.adres}</div>
+                <div class="info"><i class="fas fa-phone"></i> ${e.tel}</div>
+                <div class="btn-group">
+                    <a href="tel:${e.tel.replace(/ /g, '')}" class="btn btn-call">ARA</a>
+                    <a href="https://maps.google.com/?q=${encodeURIComponent(e.konum)}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
+                </div>
+            </div>
+        `;
+    });
+</script>
+</body>
+</html>
