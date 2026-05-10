@@ -1,94 +1,36 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nöbetçi Eczane Canlı</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --red: #d63031; --bg: #f5f6fa; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .app { max-width: 500px; margin: auto; }
-        header { text-align: center; color: var(--red); padding: 10px 0; }
-        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .city-name { background: var(--red); color: white; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
-        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); position: relative; }
-        .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
-        .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
-        .hours { font-size: 0.8rem; color: #d63031; font-weight: bold; margin-bottom: 10px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold; font-size: 0.85rem; }
-        .btn-call { background: #27ae60; }
-        .btn-map { background: #2980b9; }
-        #loader { text-align: center; display: none; padding: 30px; color: var(--red); }
-        .error-card { background: #fff3f3; border: 1px solid #fab1a0; padding: 15px; border-radius: 10px; text-align: center; color: #c0392b; }
-    </style>
-</head>
-<body>
-
-<div class="app">
-    <header>
-        <h1><i class="fas fa-plus-square"></i> Nöbetçi Eczane</h1>
-        <div id="today" style="font-size: 0.9rem; color: #888;"></div>
-    </header>
-
-    <div class="status-badge">
-        📍 Şehir: <span id="currentCity" class="city-name">Tespit ediliyor...</span>
-    </div>
-
-    <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Eczaneler Getiriliyor...</div>
-    <div id="list"></div>
-</div>
-
 <script>
-    // Yeni API Anahtarın (Eczaneler.org formatı)
+    // ANAHTAR (Eczaneler.org için başında apikey veya bearer olmadan saf haliyle dene)
     const API_KEY = "0304y1SR9u2lR0ltDXNw41L4uZTEvKuZH8zSdrMkc2QJU0O2B78mQKoxIwEF"; 
-
-    const dateDiv = document.getElementById('today');
-    const citySpan = document.getElementById('currentCity');
-    const listDiv = document.getElementById('list');
-    const loader = document.getElementById('loader');
-
-    dateDiv.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-    async function init() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-                    const data = await res.json();
-                    let city = data.address.province || data.address.city || "Kırşehir";
-                    citySpan.innerText = city.toUpperCase();
-                    fetchData(city);
-                } catch (e) { fetchData("Kırşehir"); }
-            }, () => fetchData("Kırşehir"));
-        } else { fetchData("Kırşehir"); }
-    }
 
     async function fetchData(city) {
         loader.style.display = "block";
         listDiv.innerHTML = "";
 
         try {
-            // Eczaneler.org URL ve Header Yapısı
+            // URL yapısını ve parametreyi 'city' olarak güncelledik
             const response = await fetch(`https://api.eczaneler.org/v1/duty?city=${city.toLowerCase()}`, {
                 method: 'GET',
                 headers: {
+                    // Bazı API'ler 'Authorization' bazıları 'X-Api-Key' ister. 
+                    // Eczaneler.org genelde Bearer bekler.
                     'Authorization': `Bearer ${API_KEY}`,
-                    'Accept': 'application/json'
+                    'Content-Type': 'application/json'
                 }
             });
             
+            if (!response.ok) {
+                throw new Error(`Hata Kodu: ${response.status}`);
+            }
+
             const result = await response.json();
             loader.style.display = "none";
 
-            // Gelen verinin içindeki 'data' dizisine erişiyoruz
             if (result.data && result.data.length > 0) {
                 result.data.forEach(e => {
-                    // Koordinat varsa tam konumu, yoksa isimden arama linkini oluşturur
+                    // Koordinat bazlı hatasız harita linki
                     const mapUrl = (e.coordinates && e.coordinates.lat) 
                         ? `https://www.google.com/maps?q=${e.coordinates.lat},${e.coordinates.lon}`
-                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.city)}`;
+                        : `https://www.google.com/maps/search/${encodeURIComponent(e.name + ' ' + city)}`;
 
                     listDiv.innerHTML += `
                         <div class="card">
@@ -96,7 +38,6 @@
                             <div class="hours"><i class="far fa-clock"></i> ${e.workingHours || 'Nöbetçi'}</div>
                             <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.district} - ${e.address}</div>
                             <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
-                            ${e.note ? `<div class="info" style="color:#e67e22; font-style:italic;"><i class="fas fa-info-circle"></i> ${e.note}</div>` : ''}
                             <div class="btn-group">
                                 <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
                                 <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
@@ -104,19 +45,14 @@
                         </div>`;
                 });
             } else {
-                showError("Bu şehir için nöbetçi eczane listesi şu an boş veya yetki hatası.");
+                showError("Seçilen şehirde nöbetçi eczane bulunamadı.");
             }
         } catch (error) {
             loader.style.display = "none";
-            showError("API Bağlantı hatası! Lütfen anahtarı ve URL'yi kontrol edin.");
+            // Hatayı daha detaylı gösteriyoruz
+            showError(`Bağlantı Başarısız: ${error.message}`);
         }
     }
 
-    function showError(msg) {
-        listDiv.innerHTML = `<div class="error-card"><p>${msg}</p></div>`;
-    }
-
-    init();
+    // ... init ve showError fonksiyonları aynı kalacak
 </script>
-</body>
-</html>
