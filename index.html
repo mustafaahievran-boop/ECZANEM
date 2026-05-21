@@ -10,8 +10,23 @@
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .app { max-width: 500px; margin: auto; }
         header { text-align: center; color: var(--red); padding: 10px 0; }
-        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .city-name { background: var(--red); color: white; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
+        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5px; }
+        
+        /* Şehir seçim kutusu tasarımı (Mevcut city-name tasarımı korundu) */
+        .city-select { 
+            background: var(--red); 
+            color: white; 
+            padding: 4px 8px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            border: none; 
+            outline: none; 
+            font-size: 0.9rem; 
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .city-select option { background: white; color: #333; text-transform: uppercase; }
+
         .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
         .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
         .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
@@ -32,7 +47,91 @@
     </header>
 
     <div class="status-badge">
-        📍 Şehir: <span id="currentCity" class="city-name">Tespit ediliyor...</span>
+        📍 Şehir: 
+        <select id="citySelect" class="city-select">
+            <option value="">Tespit ediliyor...</option>
+            <option value="adana">Adana</option>
+            <option value="adiyaman">Adıyaman</option>
+            <option value="afyonkarahisar">Afyonkarahisar</option>
+            <option value="agri">Ağrı</option>
+            <option value="amasya">Amasya</option>
+            <option value="ankara">Ankara</option>
+            <option value="antalya">Antalya</option>
+            <option value="artvin">Artvin</option>
+            <option value="aydin">Aydın</option>
+            <option value="balikesir">Balıkesir</option>
+            <option value="bilecik">Bilecik</option>
+            <option value="bingol">Bingöl</option>
+            <option value="bitlis">Bitlis</option>
+            <option value="bolu">Bolu</option>
+            <option value="burdur">Burdur</option>
+            <option value="bursa">Bursa</option>
+            <option value="canakkale">Çanakkale</option>
+            <option value="cankiri">Çankırı</option>
+            <option value="corum">Çorum</option>
+            <option value="denizli">Denizli</option>
+            <option value="diyarbakir">Diyarbakır</option>
+            <option value="edirne">Edirne</option>
+            <option value="elazig">Elazığ</option>
+            <option value="erzincan">Erzincan</option>
+            <option value="erzurum">Erzurum</option>
+            <option value="eskisehir">Eskişehir</option>
+            <option value="gaziantep">Gaziantep</option>
+            <option value="giresun">Giresun</option>
+            <option value="gumushane">Gümüşhane</option>
+            <option value="hakkari">Hakkari</option>
+            <option value="hatay">Hatay</option>
+            <option value="isparta">Isparta</option>
+            <option value="mersin">Mersin</option>
+            <option value="istanbul">İstanbul</option>
+            <option value="izmir">İzmir</option>
+            <option value="kars">Kars</option>
+            <option value="kastamonu">Kastamonu</option>
+            <option value="kayseri">Kayseri</option>
+            <option value="kirklareli">Kırklareli</option>
+            <option value="kirsehir">Kırşehir</option>
+            <option value="kocaeli">Kocaeli</option>
+            <option value="konya">Konya</option>
+            <option value="kutahya">Kütahya</option>
+            <option value="malatya">Malatya</option>
+            <option value="manisa">Manisa</option>
+            <option value="kahramanmaras">Kahramanmaraş</option>
+            <option value="mardin">Mardin</option>
+            <option value="mugla">Muğla</option>
+            <option value="mus">Muş</option>
+            <option value="nevsehir">Nevşehir</option>
+            <option value="nigde">Niğde</option>
+            <option value="ordu">Ordu</option>
+            <option value="rize">Rize</option>
+            <option value="sakarya">Sakarya</option>
+            <option value="samsun">Samsun</option>
+            <option value="siirt">Siirt</option>
+            <option value="sinop">Sinop</option>
+            <option value="sivas">Sivas</option>
+            <option value="tekirdag">Tekirdağ</option>
+            <option value="tokat">Tokat</option>
+            <option value="trabzon">Trabzon</option>
+            <option value="tunceli">Tunceli</option>
+            <option value="sanliurfa">Şanlıurfa</option>
+            <option value="usak">Uşak</option>
+            <option value="van">Van</option>
+            <option value="yozgat">Yozgat</option>
+            <option value="zonguldak">Zonguldak</option>
+            <option value="aksaray">Aksaray</option>
+            <option value="bayburt">Bayburt</option>
+            <option value="karaman">Karaman</option>
+            <option value="kirikkale">Kırıkkale</option>
+            <option value="batman">Batman</option>
+            <option value="sirnak">Şırnak</option>
+            <option value="bartin">Bartın</option>
+            <option value="ardahan">Ardahan</option>
+            <option value="igdir">Iğdır</option>
+            <option value="yalova">Yalova</option>
+            <option value="karabuk">Karabük</option>
+            <option value="kilis">Kilis</option>
+            <option value="osmaniye">Osmaniye</option>
+            <option value="duzce">Düzce</option>
+        </select>
     </div>
 
     <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Sorgulanıyor...</div>
@@ -40,15 +139,21 @@
 </div>
 
 <script>
-    // ANAHTARIN (Başına apikey eklenmiş haliyle)
     const API_KEY = "apikey 4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6"; 
 
     const dateDiv = document.getElementById('today');
-    const citySpan = document.getElementById('currentCity');
+    const citySelect = document.getElementById('citySelect');
     const listDiv = document.getElementById('list');
     const loader = document.getElementById('loader');
 
     dateDiv.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Şehir seçimi değiştirildiğinde çalışacak event listener
+    citySelect.addEventListener('change', (e) => {
+        if(e.target.value) {
+            fetchData(e.target.value);
+        }
+    });
 
     async function init() {
         if (navigator.geolocation) {
@@ -56,14 +161,30 @@
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
                     const data = await res.json();
-                    let city = data.address.province || data.address.city || "Kirsehir";
+                    let city = data.address.province || data.address.city || "kirsehir";
+                    
                     // Türkçe karakter temizleme
                     city = city.replace(/İ/g, 'i').replace(/I/g, 'i').replace(/Ş/g, 's').replace(/Ğ/g, 'g').replace(/Ü/g, 'u').replace(/Ö/g, 'o').replace(/Ç/g, 'c').toLowerCase();
-                    citySpan.innerText = city.toUpperCase();
-                    fetchData(city);
-                } catch (e) { fetchData("kirsehir"); }
-            }, () => fetchData("kirsehir"));
-        } else { fetchData("kirsehir"); }
+                    
+                    // Eğer API'den gelen şehir listede varsa seç, yoksa varsayılan kirsehir yap
+                    if(citySelect.querySelector(`option[value="${city}"]`)) {
+                        citySelect.value = city;
+                    } else {
+                        citySelect.value = "kirsehir";
+                    }
+                    fetchData(citySelect.value);
+                } catch (e) { 
+                    setDefaultCity();
+                }
+            }, () => setDefaultCity());
+        } else { 
+            setDefaultCity();
+        }
+    }
+
+    function setDefaultCity() {
+        citySelect.value = "kirsehir";
+        fetchData("kirsehir");
     }
 
     async function fetchData(city) {
