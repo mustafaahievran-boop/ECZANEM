@@ -10,7 +10,7 @@
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .app { max-width: 500px; margin: auto; }
         header { text-align: center; color: var(--red); padding: 10px 0; }
-        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 10px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
+        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5px; }
         
         .city-select { 
             background: var(--red); 
@@ -25,22 +25,6 @@
             text-transform: uppercase;
         }
         .city-select option { background: white; color: #333; text-transform: uppercase; }
-
-        /* Yeni şık ilçe seçim kutusu */
-        .district-select {
-            background: #2980b9;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-weight: bold;
-            border: none;
-            outline: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            display: none; /* İlçe yoksa gizli kalır */
-        }
-        .district-select option { background: white; color: #333; text-transform: uppercase; }
 
         .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
         .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
@@ -147,8 +131,6 @@
             <option value="osmaniye">Osmaniye</option>
             <option value="duzce">Düzce</option>
         </select>
-
-        <select id="districtSelect" class="district-select"></select>
     </div>
 
     <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Sorgulanıyor...</div>
@@ -160,11 +142,8 @@
 
     const dateDiv = document.getElementById('today');
     const citySelect = document.getElementById('citySelect');
-    const districtSelect = document.getElementById('districtSelect');
     const listDiv = document.getElementById('list');
     const loader = document.getElementById('loader');
-
-    let allPharmacies = []; 
 
     dateDiv.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -172,11 +151,6 @@
         if(e.target.value) {
             fetchData(e.target.value);
         }
-    });
-
-    // İlçe seçimi değiştiğinde listeyi anında süz
-    districtSelect.addEventListener('change', (e) => {
-        filterByDistrict(e.target.value);
     });
 
     async function init() {
@@ -212,8 +186,6 @@
     async function fetchData(city) {
         loader.style.display = "block";
         listDiv.innerHTML = "";
-        districtSelect.style.display = "none";
-        allPharmacies = [];
 
         try {
             const response = await fetch(`https://api.collectapi.com/health/dutyPharmacy?il=${city}`, {
@@ -228,22 +200,52 @@
             loader.style.display = "none";
 
             if (result.success && result.result) {
-                // Verileri düzenle ve ilçeleri adresten ayıkla
-                allPharmacies = result.result.map(e => {
-                    let detectedDist = e.dist || "Merkez";
-                    if (e.address && (!e.dist || e.dist.toLowerCase() === city.toLowerCase())) {
-                        const parts = e.address.split('/');
-                        if (parts.length > 1) {
-                            detectedDist = parts[parts.length - 2].trim().split(' ').pop();
-                        }
-                    }
-                    // Baş harfini büyük yapıp gerisini küçük yaparak standartlaştır (Örn: Kaman, Merkez)
-                    detectedDist = detectedDist.charAt(0).toUpperCase() + detectedDist.slice(1).toLowerCase();
-                    return { ...e, computedDist: detectedDist };
-                });
                 
-                // İlçe seçici kutusunu doldur
-                buildDistrictDropdown();
+                // AKILLI SIRALAMA: Merkez ilçesini tespit edip listenin en üstüne taşıyoruz
+                const sortedResult = result.result.sort((a, b) => {
+                    // Adres içinde ilçe ismini bulmaya çalışıyoruz
+                    let aIsMerkez = true;
+                    let bIsMerkez = true;
+
+                    if (a.address && a.address.includes('/')) {
+                        const aPart = a.address.split('/')[a.address.split('/').length - 2].toLowerCase();
+                        if (!aPart.includes('merkez') && !aPart.includes(city.toLowerCase())) aIsMerkez = false;
+                    }
+                    if (b.address && b.address.includes('/')) {
+                        const bPart = b.address.split('/')[b.address.split('/').length - 2].toLowerCase();
+                        if (!bPart.includes('merkez') && !bPart.includes(city.toLowerCase())) bIsMerkez = false;
+                    }
+                    
+                    // API dist parametresini doldurduysa doğrudan kontrol et
+                    if (a.dist && a.dist.toLowerCase() !== 'merkez' && a.dist.toLowerCase() !== city.toLowerCase()) aIsMerkez = false;
+                    if (b.dist && b.dist.toLowerCase() !== 'merkez' && b.dist.toLowerCase() !== city.toLowerCase()) bIsMerkez = false;
+
+                    if (aIsMerkez && !bIsMerkez) return -1;  // a merkezdeyse yukarı taşı
+                    if (!aIsMerkez && bIsMerkez) return 1;   // b merkezdeyse yukarı taşı
+                    return 0; // İkisi de aynı gruptaysa sırayı bozma
+                });
+
+                sortedResult.forEach(e => {
+                    // İlçeyi adresten çekip başlığa küçük bir not olarak ekleyelim (Örn: Merkez, Kaman)
+                    let distName = "Merkez";
+                    if (e.address && e.address.includes('/')) {
+                        const parts = e.address.split('/');
+                        const rawDist = parts[parts.length - 2].trim().split(' ').pop().toUpperCase();
+                        if (rawDist !== city.toUpperCase()) distName = rawDist;
+                    }
+                    if (e.dist && e.dist.toLowerCase() !== city.toLowerCase()) distName = e.dist.toUpperCase();
+
+                    listDiv.innerHTML += `
+                        <div class="card">
+                            <h2>${e.name} <span style="font-size:0.75rem; color:#888; font-weight:normal; float:right;">(${distName})</span></h2>
+                            <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
+                            <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
+                            <div class="btn-group">
+                                <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
+                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
+                            </div>
+                        </div>`;
+                });
             } else {
                 showError("Şu an veri alınamıyor. Aboneliğiniz henüz aktif olmamış olabilir.");
             }
@@ -251,58 +253,6 @@
             loader.style.display = "none";
             showError("Bağlantı hatası! Lütfen internetinizi veya API anahtarınızı kontrol edin.");
         }
-    }
-
-    function buildDistrictDropdown() {
-        districtSelect.innerHTML = "";
-        
-        // Mevcut benzersiz ilçeleri al
-        const districts = [...new Set(allPharmacies.map(e => e.computedDist))].sort();
-        
-        if (districts.length > 0) {
-            districts.forEach(dist => {
-                const opt = document.createElement('option');
-                opt.value = dist;
-                opt.innerText = dist.toUpperCase();
-                districtSelect.appendChild(opt);
-            });
-
-            // "Merkez" isimli bir ilçe varsa varsayılan olarak onu seç, yoksa listedeki ilk ilçeyi seç
-            const defaultDist = districts.includes("Merkez") ? "Merkez" : districts[0];
-            districtSelect.value = defaultDist;
-            districtSelect.style.display = "inline-block"; // Kutuyu görünür yap
-            
-            // Seçilen ilçeye göre listele (Böylece Kaman/Mucur ilk açılışta asla gözükmez)
-            filterByDistrict(defaultDist);
-        } else {
-            renderList(allPharmacies);
-        }
-    }
-
-    function filterByDistrict(districtName) {
-        const filtered = allPharmacies.filter(e => e.computedDist === districtName);
-        renderList(filtered);
-    }
-
-    function renderList(pharmacies) {
-        listDiv.innerHTML = "";
-        if(pharmacies.length === 0) {
-            listDiv.innerHTML = "<p style='text-align:center; color:#888;'>Bu ilçede şu an nöbetçi eczane bulunamadı.</p>";
-            return;
-        }
-
-        pharmacies.forEach(e => {
-            listDiv.innerHTML += `
-                <div class="card">
-                    <h2>${e.name}</h2>
-                    <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
-                    <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
-                    <div class="btn-group">
-                        <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
-                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
-                    </div>
-                </div>`;
-        });
     }
 
     function showError(msg) {
