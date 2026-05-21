@@ -26,15 +26,16 @@
         }
         .city-select option { background: white; color: #333; text-transform: uppercase; }
 
-        /* Yeni eklenen dinamik ilçe filtre butonları alanı */
+        /* İlçe filtre alanı tasarımı */
         .district-container {
             display: flex;
             gap: 8px;
             overflow-x: auto;
             padding: 5px 0 15px 0;
             white-space: nowrap;
+            justify-content: center;
         }
-        .district-container::-webkit-scrollbar { display: none; } /* Kaydırma çubuğunu gizle */
+        .district-container::-webkit-scrollbar { display: none; }
         .district-badge {
             background: white;
             color: #555;
@@ -46,6 +47,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border: 1px solid #ddd;
             transition: all 0.2s;
+            text-transform: uppercase;
         }
         .district-badge.active {
             background: var(--red);
@@ -175,7 +177,7 @@
     const listDiv = document.getElementById('list');
     const loader = document.getElementById('loader');
 
-    let allPharmacies = []; // Gelen tüm eczaneleri hafızada tutmak için
+    let allPharmacies = []; 
 
     dateDiv.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -234,12 +236,22 @@
             loader.style.display = "none";
 
             if (result.success && result.result) {
-                allPharmacies = result.result;
+                // Her eczaneye adresten bulduğumuz gerçek ilçe bilgisini enjekte ediyoruz
+                allPharmacies = result.result.map(e => {
+                    let detectedDist = e.dist || "Merkez";
+                    
+                    // Eğer API dist bilgisini boş geçtiyse adresten bulmaya çalış
+                    if (e.address && (!e.dist || e.dist.toLowerCase() === city.toLowerCase())) {
+                        const parts = e.address.split('/');
+                        if (parts.length > 1) {
+                            // "Kaman / Kırşehir" ifadesindeki Kaman kısmını temizle ve al
+                            detectedDist = parts[parts.length - 2].trim().split(' ').pop();
+                        }
+                    }
+                    return { ...e, computedDist: detectedDist };
+                });
                 
-                // Gelen verilerden benzersiz ilçe listesi oluştur (örnek: "Kaman", "Mucur")
                 createDistrictFilters();
-                
-                // İlk başta tüm eczaneleri listele
                 renderList(allPharmacies);
             } else {
                 showError("Şu an veri alınamıyor. Aboneliğiniz henüz aktif olmamış olabilir.");
@@ -250,16 +262,15 @@
         }
     }
 
-    // İlçe filtre butonlarını oluşturan fonksiyon
     function createDistrictFilters() {
         districtsDiv.innerHTML = "";
         
-        // Gelen listedeki tüm distleri topla (büyük/küçük harf duyarlılığını önlemek için temizle)
-        const districts = [...new Set(allPharmacies.map(e => e.dist))].filter(Boolean);
+        // Benzersiz ilçeleri al (Büyük harfe çevirerek eşleştir)
+        const districts = [...new Set(allPharmacies.map(e => e.computedDist.toUpperCase()))].filter(Boolean);
         
-        if(districts.length <= 1) return; // Sadece 1 ilçe varsa filtre butonuna gerek yok
+        if(districts.length <= 1) return; 
 
-        // "Hepsi" butonu
+        // HEPSİ Butonu
         const allBadge = document.createElement('div');
         allBadge.className = 'district-badge active';
         allBadge.innerText = 'HEPSİ';
@@ -270,24 +281,22 @@
         };
         districtsDiv.appendChild(allBadge);
 
-        // İlçelerin kendi butonları
+        // İlçelerin Butonları
         districts.forEach(dist => {
             const badge = document.createElement('div');
             badge.className = 'district-badge';
-            badge.innerText = dist.toUpperCase();
+            badge.innerText = dist;
             badge.onclick = () => {
                 document.querySelectorAll('.district-badge').forEach(b => b.classList.remove('active'));
                 badge.classList.add('active');
                 
-                // Sadece seçilen ilçeyi filtrele
-                const filtered = allPharmacies.filter(e => e.dist === dist);
+                const filtered = allPharmacies.filter(e => e.computedDist.toUpperCase() === dist);
                 renderList(filtered);
             };
             districtsDiv.appendChild(badge);
         });
     }
 
-    // Eczaneleri ekrana basan fonksiyon
     function renderList(pharmacies) {
         listDiv.innerHTML = "";
         if(pharmacies.length === 0) {
@@ -298,7 +307,7 @@
         pharmacies.forEach(e => {
             listDiv.innerHTML += `
                 <div class="card">
-                    <h2>${e.name} <span style="font-size:0.75rem; color:#888; font-weight:normal; float:right; text-transform:uppercase;">(${e.dist})</span></h2>
+                    <h2>${e.name} <span style="font-size:0.75rem; color:#888; font-weight:normal; float:right; text-transform:uppercase;">(${e.computedDist})</span></h2>
                     <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
                     <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
                     <div class="btn-group">
