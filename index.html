@@ -1,267 +1,226 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nöbetçi Eczane</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --red: #d63031; --bg: #f5f6fa; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .app { max-width: 500px; margin: auto; }
-        header { text-align: center; color: var(--red); padding: 10px 0; }
-        .status-badge { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5px; }
-        
-        .city-select { 
-            background: var(--red); 
-            color: white; 
-            padding: 4px 8px; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            border: none; 
-            outline: none; 
-            font-size: 0.9rem; 
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        .city-select option { background: white; color: #333; text-transform: uppercase; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nöbetçi Eczane</title>
 
-        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid #27ae60; background: #f9fff9; }
-        .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
-        .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold; font-size: 0.85rem; }
-        .btn-call { background: #27ae60; }
-        .btn-map { background: #2980b9; }
-        #loader { text-align: center; display: none; padding: 30px; color: var(--red); }
-        .error-card { background: #fff3f3; border: 1px solid #fab1a0; padding: 15px; border-radius: 10px; text-align: center; color: #c0392b; }
-    </style>
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      background:#efeff2;
+      display:flex;
+      justify-content:center;
+      padding:40px 20px;
+      min-height:100vh;
+    }
+
+    .container{
+      width:100%;
+      max-width:700px;
+      text-align:center;
+    }
+
+    .title{
+      color:#df2f2f;
+      font-size:48px;
+      font-weight:bold;
+      margin-bottom:10px;
+    }
+
+    .date{
+      color:#7a7a7a;
+      margin-bottom:25px;
+      font-size:20px;
+    }
+
+    .selector-box{
+      background:#fff;
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 3px 10px rgba(0,0,0,.08);
+      margin-bottom:25px;
+    }
+
+    select{
+      padding:12px 18px;
+      border:none;
+      border-radius:8px;
+      background:#d83232;
+      color:white;
+      font-size:16px;
+      cursor:pointer;
+      min-width:200px;
+    }
+
+    .result{
+      background:#fff;
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 3px 10px rgba(0,0,0,.08);
+      text-align:left;
+    }
+
+    .pharmacy{
+      border-left:5px solid #d83232;
+      padding:16px;
+      background:#fafafa;
+      border-radius:10px;
+      margin-bottom:15px;
+    }
+
+    .pharmacy h3{
+      color:#d83232;
+      margin-bottom:8px;
+    }
+
+    .error{
+      border:1px solid #ff9b9b;
+      background:#fff0f0;
+      color:#d83232;
+      padding:25px;
+      border-radius:16px;
+      font-size:20px;
+    }
+
+    .loading{
+      color:#d83232;
+      font-size:18px;
+      text-align:center;
+    }
+
+    @media(max-width:600px){
+      .title{
+        font-size:34px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<div class="app">
-    <header>
-        <h1><i class="fas fa-plus-square"></i> Nöbetçi Eczane</h1>
-        <div id="today" style="font-size: 0.9rem; color: #888;"></div>
-    </header>
+<div class="container">
 
-    <div class="status-badge">
-        📍 Şehir: 
-        <select id="citySelect" class="city-select">
-            <option value="">Tespit ediliyor...</option>
-            <option value="adana">Adana</option>
-            <option value="adiyaman">Adıyaman</option>
-            <option value="afyonkarahisar">Afyonkarahisar</option>
-            <option value="agri">Ağrı</option>
-            <option value="amasya">Amasya</option>
-            <option value="ankara">Ankara</option>
-            <option value="antalya">Antalya</option>
-            <option value="artvin">Artvin</option>
-            <option value="aydin">Aydın</option>
-            <option value="balikesir">Balıkesir</option>
-            <option value="bilecik">Bilecik</option>
-            <option value="bingol">Bingöl</option>
-            <option value="bitlis">Bitlis</option>
-            <option value="bolu">Bolu</option>
-            <option value="burdur">Burdur</option>
-            <option value="bursa">Bursa</option>
-            <option value="canakkale">Çanakkale</option>
-            <option value="cankiri">Çankırı</option>
-            <option value="corum">Çorum</option>
-            <option value="denizli">Denizli</option>
-            <option value="diyarbakir">Diyarbakır</option>
-            <option value="edirne">Edirne</option>
-            <option value="elazig">Elazığ</option>
-            <option value="erzincan">Erzincan</option>
-            <option value="erzurum">Erzurum</option>
-            <option value="eskisehir">Eskişehir</option>
-            <option value="gaziantep">Gaziantep</option>
-            <option value="giresun">Giresun</option>
-            <option value="gumushane">Gümüşhane</option>
-            <option value="hakkari">Hakkari</option>
-            <option value="hatay">Hatay</option>
-            <option value="isparta">Isparta</option>
-            <option value="mersin">Mersin</option>
-            <option value="istanbul">İstanbul</option>
-            <option value="izmir">İzmir</option>
-            <option value="kars">Kars</option>
-            <option value="kastamonu">Kastamonu</option>
-            <option value="kayseri">Kayseri</option>
-            <option value="kirklareli">Kırklareli</option>
-            <option value="kirsehir">Kırşehir</option>
-            <option value="kocaeli">Kocaeli</option>
-            <option value="konya">Konya</option>
-            <option value="kutahya">Kütahya</option>
-            <option value="malatya">Malatya</option>
-            <option value="manisa">Manisa</option>
-            <option value="kahramanmaras">Kahramanmaraş</option>
-            <option value="mardin">Mardin</option>
-            <option value="mugla">Muğla</option>
-            <option value="mus">Muş</option>
-            <option value="nevsehir">Nevşehir</option>
-            <option value="nigde">Niğde</option>
-            <option value="ordu">Ordu</option>
-            <option value="rize">Rize</option>
-            <option value="sakarya">Sakarya</option>
-            <option value="samsun">Samsun</option>
-            <option value="siirt">Siirt</option>
-            <option value="sinop">Sinop</option>
-            <option value="sivas">Sivas</option>
-            <option value="tekirdag">Tekirdağ</option>
-            <option value="tokat">Tokat</option>
-            <option value="trabzon">Trabzon</option>
-            <option value="tunceli">Tunceli</option>
-            <option value="sanliurfa">Şanlıurfa</option>
-            <option value="usak">Uşak</option>
-            <option value="van">Van</option>
-            <option value="yozgat">Yozgat</option>
-            <option value="zonguldak">Zonguldak</option>
-            <option value="aksaray">Aksaray</option>
-            <option value="bayburt">Bayburt</option>
-            <option value="karaman">Karaman</option>
-            <option value="kirikkale">Kırıkkale</option>
-            <option value="batman">Batman</option>
-            <option value="sirnak">Şırnak</option>
-            <option value="bartin">Bartın</option>
-            <option value="ardahan">Ardahan</option>
-            <option value="igdir">Iğdır</option>
-            <option value="yalova">Yalova</option>
-            <option value="karabuk">Karabük</option>
-            <option value="kilis">Kilis</option>
-            <option value="osmaniye">Osmaniye</option>
-            <option value="duzce">Düzce</option>
-        </select>
-    </div>
+  <div class="title">➕ Nöbetçi Eczane</div>
 
-    <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Sorgulanıyor...</div>
-    <div id="list"></div>
+  <div class="date" id="date"></div>
+
+  <div class="selector-box">
+    Şehir:
+    <select id="city">
+      <option value="KIRSEHIR">KIRŞEHİR</option>
+      <option value="ANKARA">ANKARA</option>
+      <option value="ISTANBUL">İSTANBUL</option>
+      <option value="IZMIR">İZMİR</option>
+      <option value="KAYSERI">KAYSERİ</option>
+      <option value="KONYA">KONYA</option>
+    </select>
+  </div>
+
+  <div id="content" class="result">
+    <div class="loading">Yükleniyor...</div>
+  </div>
+
 </div>
 
 <script>
-    // Sizin verdiğiniz resmi api.nobetecza.com anahtarınız
-    const API_KEY = "necz_fd1852ee8ca8e85d650ec0bb779809dddf9dca5176d7f60a"; 
+  // API KEY
+  const API_KEY = "4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
 
-    const dateDiv = document.getElementById('today');
-    const citySelect = document.getElementById('citySelect');
-    const listDiv = document.getElementById('list');
-    const loader = document.getElementById('loader');
+  // BURAYI gerçek endpoint ile değiştir
+  const API_URL = "https://api.collectapi.com/health/dutyPharmacy?il=";
 
-    dateDiv.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const citySelect = document.getElementById("city");
+  const content = document.getElementById("content");
 
-    citySelect.addEventListener('change', (e) => {
-        if(e.target.value) {
-            fetchData(e.target.value);
+  // Tarih
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    weekday: "long"
+  });
+
+  document.getElementById("date").innerText = formattedDate;
+
+  async function loadPharmacy(city){
+
+    content.innerHTML =
+      '<div class="loading">Eczaneler yükleniyor...</div>';
+
+    try{
+
+      const response = await fetch(
+        API_URL + city,
+        {
+          headers:{
+            "authorization":"apikey " + API_KEY,
+            "content-type":"application/json"
+          }
         }
-    });
+      );
 
-    async function init() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
-                    const data = await res.json();
-                    let city = data.address.province || data.address.city || "kirsehir";
-                    
-                    city = city.replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i').replace(/Ş/g, 's').replace(/ş/g, 's').replace(/Ğ/g, 'g').replace(/ğ/g, 'g').replace(/Ü/g, 'u').replace(/ü/g, 'u').replace(/Ö/g, 'o').replace(/ö/g, 'o').replace(/Ç/g, 'c').replace(/ç/g, 'c').toLowerCase().trim();
-                    
-                    if(citySelect.querySelector(`option[value="${city}"]`)) {
-                        citySelect.value = city;
-                    } else {
-                        citySelect.value = "kirsehir";
-                    }
-                    fetchData(citySelect.value);
-                } catch (e) { 
-                    setDefaultCity();
-                }
-            }, () => setDefaultCity());
-        } else { 
-            setDefaultCity();
-        }
+      if(!response.ok){
+        throw new Error("API Hatası");
+      }
+
+      const data = await response.json();
+
+      let pharmacies = data.result || data.data || [];
+
+      if(pharmacies.length === 0){
+        throw new Error("Veri bulunamadı");
+      }
+
+      content.innerHTML = "";
+
+      pharmacies.forEach(item => {
+
+        content.innerHTML += `
+          <div class="pharmacy">
+            <h3>${item.name || item.eczane_adi || "Eczane"}</h3>
+            <p><b>Adres:</b> ${item.address || item.adres || "-"}</p>
+            <p><b>Telefon:</b> ${item.phone || item.telefon || "-"}</p>
+            <p><b>İlçe:</b> ${item.dist || item.ilce || "-"}</p>
+          </div>
+        `;
+      });
+
+    }catch(err){
+
+      console.error(err);
+
+      // fallback demo veri
+      content.innerHTML = `
+        <div class="error">
+          Bağlantı hatası oluştu.<br><br>
+          Demo veri gösteriliyor.
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="pharmacy">
+            <h3>Merkez Eczanesi</h3>
+            <p><b>Adres:</b> Ahi Evran Mahallesi</p>
+            <p><b>Telefon:</b> 0386 111 22 33</p>
+            <p><b>İlçe:</b> Merkez</p>
+          </div>
+        </div>
+      `;
     }
+  }
 
-    function setDefaultCity() {
-        citySelect.value = "kirsehir";
-        fetchData("kirsehir");
-    }
+  citySelect.addEventListener("change", () => {
+    loadPharmacy(citySelect.value);
+  });
 
-    async function fetchData(city) {
-        loader.style.display = "block";
-        listDiv.innerHTML = "";
-
-        // NobetEcza API'sinin doğrudan ilçe bazlı istek mantığı
-        let ilce = "merkez";
-        if(city === "istanbul") ilce = "kadikoy";
-        if(city === "ankara") ilce = "cankaya";
-        if(city === "izmir") ilce = "konak";
-
-        try {
-            // TARAYICI CORS ENGELİNİ AŞAN GÜVENLİ PROXY KÖPRÜSÜ
-            const targetUrl = `https://api.nobetecza.com/v1/nobetci?il=${city}&ilce=${ilce}`;
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-
-            const response = await fetch(proxyUrl);
-            const proxyData = await response.json();
-            
-            // AllOrigins içeriği string olarak döndürdüğü için JSON'a çeviriyoruz
-            const data = JSON.parse(proxyData.contents);
-            loader.style.display = "none";
-
-            // NobetEcza API'sinin tüm olası veri dönme ihtimalleri garantiye alındı
-            const eczaneListesi = Array.isArray(data) ? data : (data.data || data.result || []);
-
-            if (eczaneListesi && eczaneListesi.length > 0) {
-                renderPharmacies(eczaneListesi);
-            } else {
-                showError("Seçilen bölgede şu an aktif nöbetçi eczane bulunamadı.");
-            }
-        } catch (error) {
-            loader.style.display = "none";
-            showError("Veriler alınırken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.");
-        }
-    }
-
-    function renderPharmacies(list) {
-        listDiv.innerHTML = "";
-        
-        list.forEach(e => {
-            // Sitedeki dökümandan gelen TÜM küçük/büyük değişken alternatifleri eşlendi (Boş kalma sorunu çözüldü)
-            const name = e.name || e.EczaneAdi || e.eczane_adi || "Bilinmeyen Eczane";
-            const address = e.address || e.Adres || e.adres || "Adres bilgisi yok";
-            const phone = e.phone || e.Telefon || e.telefon || "";
-            const district = (e.ilce || e.District || e.district || "").toLowerCase();
-            const cleanAddr = address.toLowerCase();
-
-            // İÇERİK FİLTRESİ: Eğer gelen veri kazaen ilçe içeriyorsa sadece Merkez olanları tut
-            if (district !== "" && !district.includes("merkez") && !cleanAddr.includes("merkez")) {
-                if(citySelect.value === "kirsehir") return; // Kırşehir için ilçeleri tamamen eliyoruz
-            }
-            
-            const badgeText = `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>`;
-            
-            // İsim temizleme ve formatlama
-            let cleanName = name.toUpperCase().replace("ECZANESİ", "").replace("ECZANE", "").trim();
-            cleanName = cleanName + " ECZANESİ";
-            
-            const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(cleanName + ' ' + address)}`;
-
-            listDiv.innerHTML += `
-                <div class="card">
-                    <h2>${cleanName} ${badgeText}</h2>
-                    <div class="info"><i class="fas fa-map-marker-alt"></i> ${address}</div>
-                    <div class="info"><i class="fas fa-phone"></i> ${phone}</div>
-                    <div class="btn-group">
-                        <a href="tel:${phone}" class="btn btn-call">ARA</a>
-                        <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
-                    </div>
-                </div>`;
-        });
-    }
-
-    function showError(msg) {
-        listDiv.innerHTML = `<div class="error-card"><p>${msg}</p></div>`;
-    }
-
-    init();
+  loadPharmacy(citySelect.value);
 </script>
+
 </body>
 </html>
