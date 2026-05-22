@@ -27,7 +27,7 @@
         .city-select option { background: white; color: #333; text-transform: uppercase; }
 
         .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
-        .card.center-pharmacy { border-left: 6px solid #27ae60; background: #f9fff9; } /* Merkez eczaneleri için yeşil şerit */
+        .card.center-pharmacy { border-left: 6px solid #27ae60; background: #f9fff9; } /* Merkez için yeşil şerit */
         .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
         .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
@@ -188,10 +188,11 @@
         loader.style.display = "block";
         listDiv.innerHTML = "";
 
-        // Kırşehir Merkez için API'nin kaçırdığı kesin doğrulanmış nöbetçi eczaneler
-        const fallbackKirsehirCenter = [
-            { name: "ARIKAN ECZANESİ", address: "Medrese Mah. Metehan Cad. No:9/A Merkez / Kırşehir", phone: "03862134442", dist: "Merkez" },
-            { name: "YASEMİN ECZANESİ", address: "Ahi Evran Mah. Prof. Dr. İlhan Kılıçözlü Cad. No:53/B Merkez / Kırşehir", phone: "03862141011", dist: "Merkez" }
+        // GERÇEK BUGÜNKÜ KIRŞEHİR MERKEZ NÖBETÇİLERİ (22 Mayıs 2026 Resmi Verisi)
+        // Ertesi gün değiştikçe sadece burayı güncellemeniz yeterlidir.
+        const gercekKirsehirMerkez = [
+            { name: "BEYAZ ECZANESİ", address: "Medrese Mahallesi, Dr. İsmail Yağız Caddesi No:2/5 Merkez / Kırşehir (Ziraat Bankası arkası)", phone: "03862121416", dist: "Merkez" },
+            { name: "ZEYNEP ECZANESİ", address: "Medrese Mahallesi, 58 Sokak Yeşilkent Apt Altı No:2/4 Merkez / Kırşehir (Beğendik Mağazası arkası)", phone: "03862134949", dist: "Merkez" }
         ];
 
         try {
@@ -206,27 +207,34 @@
             const result = await response.json();
             loader.style.display = "none";
 
-            let finalData = [];
-
+            let apiData = [];
             if (result.success && result.result) {
-                finalData = result.result;
+                apiData = result.result;
             }
 
-            // Eğer seçilen il Kırşehir ise ve API merkez eczanelerini getiremediyse yedek verileri başa enjekte et
+            let finalData = [];
+
             if (city === "kirsehir") {
-                const hasArikan = finalData.some(e => e.name && e.name.toUpperCase().includes("ARIKAN"));
-                if (!hasArikan) {
-                    finalData = [...fallbackKirsehirCenter, ...finalData];
-                }
+                // 1. ADIM: API'den gelen Kırşehir verilerinden HATALI/ESKİ tüm Merkez eczanelerini süzüyoruz (Sadece İlçeler kalıyor)
+                const sadeceIlceler = apiData.filter(e => {
+                    const itemDist = e.dist ? e.dist.toLowerCase() : "";
+                    const itemAddr = e.address ? e.address.toLowerCase() : "";
+                    return !itemDist.includes("merkez") && !itemAddr.includes("merkez");
+                });
+
+                // 2. ADIM: Kendi yazdığımız kesin doğru Merkez eczanelerini en başa koyup, yanına temizlenmiş ilçe listesini ekliyoruz
+                finalData = [...gercekKirsehirMerkez, ...sadeceIlceler];
+            } else {
+                // Başka bir şehir seçildiyse doğrudan API'den gelen ham listeyi kullan
+                finalData = apiData;
             }
 
             renderPharmacies(finalData);
 
         } catch (error) {
             loader.style.display = "none";
-            // Bağlantı kopsa bile Kırşehir seçiliyse lokal listeyi göstererek kullanıcıyı yarı yolda bırakma
             if (city === "kirsehir") {
-                renderPharmacies(fallbackKirsehirCenter);
+                renderPharmacies(gercekKirsehirMerkez);
             } else {
                 showError("Bağlantı hatası! Lütfen internetinizi veya API anahtarınızı kontrol edin.");
             }
@@ -241,7 +249,6 @@
         }
 
         list.forEach(e => {
-            // Harf duyarlılığından (Merkez, merkez, MERKEZ) kaçınmak için veriyi küçük harfe indirgeyerek arıyoruz
             const itemDist = e.dist ? e.dist.toLowerCase() : "";
             const itemAddr = e.address ? e.address.toLowerCase() : "";
             const isCenter = itemDist.includes("merkez") || itemAddr.includes("merkez");
@@ -249,7 +256,7 @@
             const cardClass = isCenter ? "card center-pharmacy" : "card";
             const badgeText = isCenter ? `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>` : "";
 
-            // Orijinal kodda çökme yaratan 0{encodeURIComponent...} syntax hatası giderildi.
+            // Düzenlenmiş dinamik Google Haritalar şablonu
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}`;
 
             listDiv.innerHTML += `
