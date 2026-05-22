@@ -172,6 +172,7 @@ header h1{
 </div>
 
 <script>
+// CollectAPI anahtarınız aktif durumdadır
 const API_KEY = "4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
 
 const citySelect = document.getElementById("citySelect");
@@ -246,7 +247,7 @@ function renderPharmacies(list){
     list.forEach(e => {
         const dist = e.dist || "Merkez";
         
-        // Sadece 'Merkez' yazanları basar, diğer tüm ilçeleri (Kaman, Mucur vb.) atlar
+        // FİLTRE: İlçe adında 'merkez' ifadesi geçmeyen (Kaman, Mucur vb.) tüm kayıtları eler
         const isCenter = dist.toLowerCase().includes("merkez");
         if (!isCenter) {
             return; 
@@ -258,7 +259,7 @@ function renderPharmacies(list){
         const address = e.address || "Adres bilgisi yok";
         const phone = e.phone || "Telefon yok";
 
-        // Gerçek ve sorunsuz çalışan harita yönlendirmesi
+        // Harita linki Google Haritalar standardına göre tamamen düzeltildi
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
 
         listDiv.innerHTML += `
@@ -291,9 +292,9 @@ function renderPharmacies(list){
         </div>`;
     });
 
-    // Eğer filtreleme sonucunda şehirde hiç merkez eczane kalmadıysa kullanıcıya bildirir
+    // Filtreleme sonrasında merkezde eczane kalmadıysa uyarı gösterir
     if (count === 0) {
-        showError("Seçilen şehrin Merkez ilçesi için şu an nöbetçi eczane kaydı bulunamadı.");
+        showError("Seçilen şehrin Merkez bölgesi için aktif nöbetçi eczane kaydı bulunamadı.");
     }
 }
 
@@ -306,7 +307,7 @@ function showError(message){
     </div>`;
 }
 
-// Sayfa açıldığında otomatik olarak Kırşehir verisini yükle
+// İlk açılışta Kırşehir Merkez verilerini yükler
 fetchData("kirsehir");
 </script>
 
