@@ -4,47 +4,38 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Nöbetçi Eczane</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-
 <style>
 :root{
     --red:#d63031;
     --bg:#f2f3f7;
 }
-
 *{
     box-sizing:border-box;
     margin:0;
     padding:0;
 }
-
 body{
     font-family:Arial,sans-serif;
     background:var(--bg);
     padding:18px;
 }
-
 .app{
     max-width:520px;
     margin:auto;
 }
-
 header{
     text-align:center;
     margin-bottom:20px;
 }
-
 header h1{
     color:var(--red);
     font-size:2rem;
 }
-
 #today{
     color:#777;
     margin-top:8px;
 }
-
 .status-badge{
     background:#fff;
     padding:16px;
@@ -56,7 +47,6 @@ header h1{
     box-shadow:0 4px 10px rgba(0,0,0,.06);
     margin-bottom:20px;
 }
-
 .city-select{
     border:none;
     background:var(--red);
@@ -67,14 +57,12 @@ header h1{
     outline:none;
     cursor:pointer;
 }
-
 #loader{
     display:none;
     text-align:center;
     padding:30px;
     color:var(--red);
 }
-
 .card{
     background:#fff;
     border-radius:18px;
@@ -82,15 +70,12 @@ header h1{
     margin-bottom:14px;
     border-left:6px solid #27ae60;
     box-shadow:0 4px 14px rgba(0,0,0,.08);
-    background:#fbfffb;
 }
-
 .card h2{
     font-size:1rem;
     margin-bottom:10px;
     color:#222;
 }
-
 .info{
     display:flex;
     gap:10px;
@@ -98,13 +83,11 @@ header h1{
     color:#555;
     font-size:.95rem;
 }
-
 .btn-group{
     display:flex;
     gap:10px;
     margin-top:15px;
 }
-
 .btn{
     flex:1;
     text-decoration:none;
@@ -114,15 +97,12 @@ header h1{
     color:#fff;
     font-weight:bold;
 }
-
 .btn-call{
     background:#27ae60;
 }
-
 .btn-map{
     background:#2980b9;
 }
-
 .error-card{
     background:#fff1f1;
     border:1px solid #ffb6b6;
@@ -134,14 +114,9 @@ header h1{
 </style>
 </head>
 <body>
-
 <div class="app">
-
 <header>
-    <h1>
-        <i class="fas fa-plus-square"></i>
-        Nöbetçi Eczane
-    </h1>
+    <h1><i class="fas fa-plus-square"></i> Nöbetçi Eczane</h1>
     <div id="today"></div>
 </header>
 
@@ -162,67 +137,55 @@ header h1{
     <br><br>
     Veriler yükleniyor...
 </div>
-
 <div id="list"></div>
-
 </div>
 
 <script>
-// Sizin aktif ettiğiniz CollectAPI Anahtarınız
 const API_KEY = "4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
-
 const citySelect = document.getElementById("citySelect");
 const listDiv = document.getElementById("list");
 const loader = document.getElementById("loader");
 
-document.getElementById("today").innerText = new Date().toLocaleDateString(
-"tr-TR",
-{
-weekday:"long",
-day:"numeric",
-month:"long",
-year:"numeric"
-}
-);
+document.getElementById("today").innerText = new Date().toLocaleDateString("tr-TR", {
+    weekday:"long", day:"numeric", month:"long", year:"numeric"
+});
 
 citySelect.addEventListener("change", e => fetchData(e.target.value));
 
 async function fetchData(city){
-
     loader.style.display = "block";
     listDiv.innerHTML = "";
 
     try{
         const response = await fetch(
-        `https://api.collectapi.com/health/dutyPharmacy?il=${city}`,
-        {
-            method:"GET",
-            headers:{
-                "content-type":"application/json",
-                "authorization": `apikey ${API_KEY}`
-            }
-        });
+            `https://api.collectapi.com/health/dutyPharmacy?il=${city}`,
+            {
+                method:"GET",
+                headers:{
+                    "content-type":"application/json",
+                    "authorization": `apikey ${API_KEY}`
+                }
+            });
 
-        if(!response.ok){
-            throw new Error("API bağlantısı başarısız");
-        }
+        if(!response.ok) throw new Error("API hatası");
 
         const json = await response.json();
         loader.style.display = "none";
 
-        const pharmacies = json.result || [];
+        let pharmacies = json.result || [];
 
         if(!pharmacies.length){
-            showError("Bu şehir için aktif nöbetçi eczane verisi alınamadı.");
+            showError("Bu şehir için nöbetçi eczane bulunamadı.");
             return;
         }
 
-        renderPharmacies(uniqueList(pharmacies), city);
+        pharmacies = uniqueList(pharmacies);
+        renderPharmacies(pharmacies, city);
 
     }catch(err){
         console.error(err);
         loader.style.display = "none";
-        showError("Bağlantı hatası oluştu.");
+        showError("Veriler alınırken bir hata oluştu.");
     }
 }
 
@@ -241,83 +204,80 @@ function renderPharmacies(list, city){
     let count = 0;
 
     list.forEach(e => {
-        const dist = e.dist || "";
-        const address = e.address || "";
-        
-        let isTargetArea = false;
-        
-        if (city === "kirsehir") {
-            // Kırşehir için ilçe alanı boşsa veya içinde merkez geçiyorsa kabul et
-            isTargetArea = dist.toLowerCase().includes("merkez") || address.toLowerCase().includes("merkez") || dist === "";
-        } else if (city === "istanbul") {
-            isTargetArea = dist.toLowerCase().includes("kadıköy") || dist.toLowerCase().includes("kadikoy");
-        } else if (city === "ankara") {
-            isTargetArea = dist.toLowerCase().includes("çankaya") || dist.toLowerCase().includes("cankaya");
-        } else if (city === "izmir") {
-            isTargetArea = dist.toLowerCase().includes("konak");
-        } else {
-            isTargetArea = dist.toLowerCase().includes("merkez") || dist === "";
-        }
-
-        if (!isTargetArea && (city === "kirsehir" || city === "istanbul" || city === "ankara" || city === "izmir")) {
-            return; 
-        }
-
-        count++;
-
+        const dist = (e.dist || "").trim();
+        const address = (e.address || "").trim();
         const name = (e.name || "Eczane").toUpperCase();
-        const cleanAddress = address || "Adres bilgisi yok";
         const phone = e.phone || "Telefon yok";
         const displayDist = dist ? dist.toUpperCase() : "MERKEZ";
 
-        // Harita Link Yapısı Eksiksiz Düzeltildi ($ işaretleri eklendi)
-        let mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + cleanAddress)}`;
-        if(e.loc) {
-            mapUrl = `https://www.google.com/maps/search/?api=1&query=${e.loc}`;
+        // ---------- İLÇE FİLTRELEME (Daha esnek hale getirildi) ----------
+        let showThis = true;
+
+        if (city === "kirsehir") {
+            const merkezKelimeleri = ["merkez", "kırşehir merkez", "merkez/kırşehir"];
+            showThis = merkezKelimeleri.some(k => 
+                dist.toLowerCase().includes(k) || 
+                address.toLowerCase().includes(k)
+            ) || dist === "" || dist.toLowerCase() === "kırşehir";
         }
+        else if (city === "istanbul") {
+            showThis = dist.toLowerCase().includes("kadıköy") || dist.toLowerCase().includes("kadikoy");
+        }
+        else if (city === "ankara") {
+            showThis = dist.toLowerCase().includes("çankaya") || dist.toLowerCase().includes("cankaya");
+        }
+        else if (city === "izmir") {
+            showThis = dist.toLowerCase().includes("konak");
+        }
+
+        if (!showThis) return;
+
+        count++;
+
+        const mapUrl = e.loc 
+            ? `https://www.google.com/maps/search/?api=1&query=${e.loc}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
 
         listDiv.innerHTML += `
         <div class="card">
-            
             <h2>
-                ${name} <span style="font-size:0.75rem; color:#27ae60; float:right;"><i class="fas fa-star"></i> ${displayDist}</span>
-            </h2> 
-
+                ${name} 
+                <span style="font-size:0.75rem; color:#27ae60; float:right;">
+                    <i class="fas fa-star"></i> ${displayDist}
+                </span>
+            </h2>
             <div class="info">
-                <i class="fas fa-map-marker-alt"></i>
-                ${cleanAddress}
+                <i class="fas fa-map-marker-alt"></i> ${address || "Adres bilgisi yok"}
             </div>
-
             <div class="info">
-                <i class="fas fa-phone"></i>
-                ${phone}
+                <i class="fas fa-phone"></i> ${phone}
             </div>
-
             <div class="info">
-                <i class="fas fa-location-dot"></i>
-                ${displayDist}
+                <i class="fas fa-location-dot"></i> ${displayDist}
             </div>
-
             <div class="btn-group">
                 <a href="tel:${phone}" class="btn btn-call">ARA</a>
                 <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
             </div>
-
         </div>`;
     });
 
-    // Güvenlik Önlemi: Eğer filtrelemede sıfır eczane çıkarsa, hata basmak yerine tüm listeyi ekrana basar
+    // Hiç eczane gösterilemediyse ilk 5 tanesini göster (güvenlik)
     if (count === 0 && list.length > 0) {
-        list.slice(0, 3).forEach(e => {
+        list.slice(0, 5).forEach(e => {
+            // ... aynı kart yapısı (kodu kısaltmak için burada tekrar yazmadım)
             const name = (e.name || "Eczane").toUpperCase();
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + e.address)}`;
+            const address = e.address || "Adres yok";
+            const phone = e.phone || "Telefon yok";
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
+
             listDiv.innerHTML += `
             <div class="card">
-                <h2>${name} <span style="font-size:0.75rem; color:#777; float:right;">${(e.dist || "").toUpperCase()}</span></h2>
-                <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
-                <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
+                <h2>${name} <span style="font-size:0.75rem; color:#777; float:right;">${(e.dist||"").toUpperCase()}</span></h2>
+                <div class="info"><i class="fas fa-map-marker-alt"></i> ${address}</div>
+                <div class="info"><i class="fas fa-phone"></i> ${phone}</div>
                 <div class="btn-group">
-                    <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
+                    <a href="tel:${phone}" class="btn btn-call">ARA</a>
                     <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
                 </div>
             </div>`;
@@ -328,15 +288,13 @@ function renderPharmacies(list, city){
 function showError(message){
     listDiv.innerHTML = `
     <div class="error-card">
-        <i class="fas fa-triangle-exclamation fa-2x"></i>
-        <br><br>
+        <i class="fas fa-triangle-exclamation fa-2x"></i><br><br>
         ${message}
     </div>`;
 }
 
-// İlk tetikleme
+// İlk yükleme
 fetchData("kirsehir");
 </script>
-
 </body>
 </html>
