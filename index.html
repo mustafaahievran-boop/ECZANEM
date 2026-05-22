@@ -1,225 +1,362 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nöbetçi Eczane</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nöbetçi Eczane</title>
 
-  <style>
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-      font-family:Arial, sans-serif;
-    }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
-    body{
-      background:#efeff2;
-      display:flex;
-      justify-content:center;
-      padding:40px 20px;
-      min-height:100vh;
-    }
+<style>
+:root{
+    --red:#d63031;
+    --bg:#f2f3f7;
+}
 
-    .container{
-      width:100%;
-      max-width:700px;
-      text-align:center;
-    }
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
 
-    .title{
-      color:#df2f2f;
-      font-size:48px;
-      font-weight:bold;
-      margin-bottom:10px;
-    }
+body{
+    font-family:Arial,sans-serif;
+    background:var(--bg);
+    padding:18px;
+}
 
-    .date{
-      color:#7a7a7a;
-      margin-bottom:25px;
-      font-size:20px;
-    }
+.app{
+    max-width:520px;
+    margin:auto;
+}
 
-    .selector-box{
-      background:#fff;
-      border-radius:16px;
-      padding:18px;
-      box-shadow:0 3px 10px rgba(0,0,0,.08);
-      margin-bottom:25px;
-    }
+header{
+    text-align:center;
+    margin-bottom:20px;
+}
 
-    select{
-      padding:12px 18px;
-      border:none;
-      border-radius:8px;
-      background:#d83232;
-      color:white;
-      font-size:16px;
-      cursor:pointer;
-      min-width:200px;
-    }
+header h1{
+    color:var(--red);
+    font-size:2rem;
+}
 
-    .result{
-      background:#fff;
-      border-radius:16px;
-      padding:20px;
-      box-shadow:0 3px 10px rgba(0,0,0,.08);
-      text-align:left;
-    }
+#today{
+    color:#777;
+    margin-top:8px;
+}
 
-    .pharmacy{
-      border-left:5px solid #d83232;
-      padding:16px;
-      background:#fafafa;
-      border-radius:10px;
-      margin-bottom:15px;
-    }
+.status-badge{
+    background:#fff;
+    padding:16px;
+    border-radius:16px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    box-shadow:0 4px 10px rgba(0,0,0,.06);
+    margin-bottom:20px;
+}
 
-    .pharmacy h3{
-      color:#d83232;
-      margin-bottom:8px;
-    }
+.city-select{
+    border:none;
+    background:var(--red);
+    color:#fff;
+    border-radius:8px;
+    padding:10px 14px;
+    font-weight:bold;
+    outline:none;
+    cursor:pointer;
+}
 
-    .error{
-      border:1px solid #ff9b9b;
-      background:#fff0f0;
-      color:#d83232;
-      padding:25px;
-      border-radius:16px;
-      font-size:20px;
-    }
+#loader{
+    display:none;
+    text-align:center;
+    padding:30px;
+    color:var(--red);
+}
 
-    .loading{
-      color:#d83232;
-      font-size:18px;
-      text-align:center;
-    }
+.card{
+    background:#fff;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:14px;
+    border-left:6px solid var(--red);
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+}
 
-    @media(max-width:600px){
-      .title{
-        font-size:34px;
-      }
-    }
-  </style>
+.center-pharmacy{
+    border-left-color:#27ae60;
+    background:#fbfffb;
+}
+
+.card h2{
+    font-size:1rem;
+    margin-bottom:10px;
+    color:#222;
+}
+
+.info{
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+    color:#555;
+    font-size:.95rem;
+}
+
+.btn-group{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+.btn{
+    flex:1;
+    text-decoration:none;
+    text-align:center;
+    padding:12px;
+    border-radius:10px;
+    color:#fff;
+    font-weight:bold;
+}
+
+.btn-call{
+    background:#27ae60;
+}
+
+.btn-map{
+    background:#2980b9;
+}
+
+.error-card{
+    background:#fff1f1;
+    border:1px solid #ffb6b6;
+    border-radius:16px;
+    text-align:center;
+    padding:25px;
+    color:#c0392b;
+}
+</style>
 </head>
 <body>
 
-<div class="container">
+<div class="app">
 
-  <div class="title">➕ Nöbetçi Eczane</div>
+<header>
+    <h1>
+        <i class="fas fa-plus-square"></i>
+        Nöbetçi Eczane
+    </h1>
+    <div id="today"></div>
+</header>
 
-  <div class="date" id="date"></div>
-
-  <div class="selector-box">
-    Şehir:
-    <select id="city">
-      <option value="KIRSEHIR">KIRŞEHİR</option>
-      <option value="ANKARA">ANKARA</option>
-      <option value="ISTANBUL">İSTANBUL</option>
-      <option value="IZMIR">İZMİR</option>
-      <option value="KAYSERI">KAYSERİ</option>
-      <option value="KONYA">KONYA</option>
+<div class="status-badge">
+    📍 Şehir:
+    <select id="citySelect" class="city-select">
+        <option value="kirsehir">Kırşehir</option>
+        <option value="ankara">Ankara</option>
+        <option value="istanbul">İstanbul</option>
+        <option value="izmir">İzmir</option>
+        <option value="kayseri">Kayseri</option>
+        <option value="konya">Konya</option>
     </select>
-  </div>
+</div>
 
-  <div id="content" class="result">
-    <div class="loading">Yükleniyor...</div>
-  </div>
+<div id="loader">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <br><br>
+    Veriler yükleniyor...
+</div>
+
+<div id="list"></div>
 
 </div>
 
 <script>
-  // API KEY
-  const API_KEY = "4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
+const API_KEY =
+"4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
 
-  // BURAYI gerçek endpoint ile değiştir
-  const API_URL = "https://api.collectapi.com/health/dutyPharmacy?il=";
+const citySelect =
+document.getElementById("citySelect");
 
-  const citySelect = document.getElementById("city");
-  const content = document.getElementById("content");
+const listDiv =
+document.getElementById("list");
 
-  // Tarih
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    weekday: "long"
-  });
+const loader =
+document.getElementById("loader");
 
-  document.getElementById("date").innerText = formattedDate;
+document.getElementById("today").innerText =
+new Date().toLocaleDateString(
+"tr-TR",
+{
+weekday:"long",
+day:"numeric",
+month:"long",
+year:"numeric"
+}
+);
 
-  async function loadPharmacy(city){
+citySelect.addEventListener(
+"change",
+e => fetchData(e.target.value)
+);
 
-    content.innerHTML =
-      '<div class="loading">Eczaneler yükleniyor...</div>';
+async function fetchData(city){
+
+    loader.style.display = "block";
+    listDiv.innerHTML = "";
 
     try{
 
-      const response = await fetch(
-        API_URL + city,
+        const response = await fetch(
+`https://api.collectapi.com/health/dutyPharmacy?il=${city}`,
         {
-          headers:{
-            "authorization":"apikey " + API_KEY,
-            "content-type":"application/json"
-          }
+            method:"GET",
+            headers:{
+                "content-type":"application/json",
+                "authorization":
+                `apikey ${API_KEY}`
+            }
+        });
+
+        if(!response.ok){
+            throw new Error(
+            "API bağlantısı başarısız");
         }
-      );
 
-      if(!response.ok){
-        throw new Error("API Hatası");
-      }
+        const json =
+        await response.json();
 
-      const data = await response.json();
+        loader.style.display = "none";
 
-      let pharmacies = data.result || data.data || [];
+        const pharmacies =
+        json.result || [];
 
-      if(pharmacies.length === 0){
-        throw new Error("Veri bulunamadı");
-      }
+        if(!pharmacies.length){
+            showError(
+            "Bu şehir için nöbetçi eczane bulunamadı.");
+            return;
+        }
 
-      content.innerHTML = "";
-
-      pharmacies.forEach(item => {
-
-        content.innerHTML += `
-          <div class="pharmacy">
-            <h3>${item.name || item.eczane_adi || "Eczane"}</h3>
-            <p><b>Adres:</b> ${item.address || item.adres || "-"}</p>
-            <p><b>Telefon:</b> ${item.phone || item.telefon || "-"}</p>
-            <p><b>İlçe:</b> ${item.dist || item.ilce || "-"}</p>
-          </div>
-        `;
-      });
+        renderPharmacies(
+            uniqueList(pharmacies)
+        );
 
     }catch(err){
 
-      console.error(err);
+        console.error(err);
 
-      // fallback demo veri
-      content.innerHTML = `
-        <div class="error">
-          Bağlantı hatası oluştu.<br><br>
-          Demo veri gösteriliyor.
-        </div>
+        loader.style.display =
+        "none";
 
-        <div style="margin-top:20px">
-          <div class="pharmacy">
-            <h3>Merkez Eczanesi</h3>
-            <p><b>Adres:</b> Ahi Evran Mahallesi</p>
-            <p><b>Telefon:</b> 0386 111 22 33</p>
-            <p><b>İlçe:</b> Merkez</p>
-          </div>
-        </div>
-      `;
+        showError(
+        "Bağlantı hatası oluştu.");
     }
-  }
+}
 
-  citySelect.addEventListener("change", () => {
-    loadPharmacy(citySelect.value);
-  });
+function uniqueList(list){
 
-  loadPharmacy(citySelect.value);
+    const seen = new Set();
+
+    return list.filter(item => {
+
+        const key =
+        (item.name || "") +
+        (item.phone || "");
+
+        if(seen.has(key))
+            return false;
+
+        seen.add(key);
+        return true;
+    });
+}
+
+function renderPharmacies(list){
+
+    listDiv.innerHTML = "";
+
+    list.forEach(e => {
+
+        const name =
+        (e.name || "Eczane")
+        .toUpperCase();
+
+        const address =
+        e.address ||
+        "Adres bilgisi yok";
+
+        const phone =
+        e.phone ||
+        "Telefon yok";
+
+        const dist =
+        e.dist ||
+        "Merkez";
+
+        const isCenter =
+        dist.toLowerCase()
+        .includes("merkez");
+
+        const mapUrl =
+`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+        listDiv.innerHTML += `
+        <div class="card
+        ${isCenter ?
+        'center-pharmacy' : ''}">
+        
+            <h2>
+                ${name}
+            </h2>
+
+            <div class="info">
+                <i class="fas fa-map-marker-alt"></i>
+                ${address}
+            </div>
+
+            <div class="info">
+                <i class="fas fa-phone"></i>
+                ${phone}
+            </div>
+
+            <div class="info">
+                <i class="fas fa-location-dot"></i>
+                ${dist}
+            </div>
+
+            <div class="btn-group">
+                <a href="tel:${phone}"
+                class="btn btn-call">
+                ARA
+                </a>
+
+                <a href="${mapUrl}"
+                target="_blank"
+                class="btn btn-map">
+                YOL TARİFİ
+                </a>
+            </div>
+
+        </div>`;
+    });
+}
+
+function showError(message){
+
+    listDiv.innerHTML = `
+    <div class="error-card">
+        <i class="fas
+        fa-triangle-exclamation fa-2x">
+        </i>
+
+        <br><br>
+
+        ${message}
+    </div>`;
+}
+
+fetchData("kirsehir");
 </script>
 
 </body>
