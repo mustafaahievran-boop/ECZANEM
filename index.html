@@ -26,8 +26,7 @@
         }
         .city-select option { background: white; color: #333; text-transform: uppercase; }
 
-        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--red); }
-        .card.center-pharmacy { border-left: 6px solid #27ae60; background: #f9fff9; } 
+        .card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 6px solid #27ae60; background: #f9fff9; } /* Tüm merkez kartlar yeşil şerit */
         .card h2 { margin: 0 0 5px 0; font-size: 1.1rem; color: #2d3436; text-transform: uppercase; }
         .info { font-size: 0.9rem; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
@@ -218,18 +217,26 @@
             return;
         }
 
+        let sayac = 0;
+
         list.forEach(e => {
             const dist = (e.dist || "").toLowerCase();
             const addr = (e.address || "").toLowerCase();
+            
+            // CRITICAL AKILLI FİLTRE: İlçe veya adres alanında "merkez" kelimesi GEÇMİYORSA ekrana basma, pas geç!
+            // Eğer API dist değerini boş gönderdiyse de Merkez kabul et.
             const isCenter = dist.includes("merkez") || addr.includes("merkez") || dist === "";
             
-            const cardClass = isCenter ? "card center-pharmacy" : "card";
-            const badgeText = isCenter ? `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>` : "";
-            
+            if (!isCenter) {
+                return; // Taşra ilçesiyse (Kaman, Mucur vb.) bu eczaneyi listeye eklemeden atla.
+            }
+
+            sayac++;
+            const badgeText = `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>`;
             const mapUrl = `maps.google.com/?q=${encodeURIComponent(e.name + ' ' + e.address)}`;
 
             listDiv.innerHTML += `
-                <div class="${cardClass}">
+                <div class="card">
                     <h2>${e.name} ${badgeText}</h2>
                     <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
                     <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
@@ -239,6 +246,10 @@
                     </div>
                 </div>`;
         });
+
+        if (sayac === 0) {
+            listDiv.innerHTML = "<p style='text-align:center; padding: 20px; color:#888;'>Bu şehir için Merkez nöbetçi eczane kaydı bulunamadı.</p>";
+        }
     }
 
     function showError(msg) {
