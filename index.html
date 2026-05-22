@@ -141,7 +141,9 @@ header h1{
 </div>
 
 <script>
-const API_KEY = "4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6";
+// Yeni API Anahtarı
+const API_KEY = "necz_fd1852ee8ca8e85d650ec0bb779809dddf9dca5176d7f60a";
+
 const citySelect = document.getElementById("citySelect");
 const listDiv = document.getElementById("list");
 const loader = document.getElementById("loader");
@@ -167,7 +169,9 @@ async function fetchData(city){
                 }
             });
 
-        if(!response.ok) throw new Error("API hatası");
+        if(!response.ok) {
+            throw new Error(`API Hatası: ${response.status}`);
+        }
 
         const json = await response.json();
         loader.style.display = "none";
@@ -175,7 +179,7 @@ async function fetchData(city){
         let pharmacies = json.result || [];
 
         if(!pharmacies.length){
-            showError("Bu şehir için nöbetçi eczane bulunamadı.");
+            showError("Bu şehir için nöbetçi eczane verisi bulunamadı.");
             return;
         }
 
@@ -185,7 +189,7 @@ async function fetchData(city){
     }catch(err){
         console.error(err);
         loader.style.display = "none";
-        showError("Veriler alınırken bir hata oluştu.");
+        showError("Veriler alınırken hata oluştu.<br><small>" + err.message + "</small>");
     }
 }
 
@@ -210,24 +214,22 @@ function renderPharmacies(list, city){
         const phone = e.phone || "Telefon yok";
         const displayDist = dist ? dist.toUpperCase() : "MERKEZ";
 
-        // ---------- İLÇE FİLTRELEME (Daha esnek hale getirildi) ----------
         let showThis = true;
 
         if (city === "kirsehir") {
-            const merkezKelimeleri = ["merkez", "kırşehir merkez", "merkez/kırşehir"];
+            const merkezKelimeleri = ["merkez", "kırşehir", "merkez/kırşehir"];
             showThis = merkezKelimeleri.some(k => 
-                dist.toLowerCase().includes(k) || 
-                address.toLowerCase().includes(k)
-            ) || dist === "" || dist.toLowerCase() === "kırşehir";
+                dist.toLowerCase().includes(k) || address.toLowerCase().includes(k)
+            ) || !dist;
         }
         else if (city === "istanbul") {
-            showThis = dist.toLowerCase().includes("kadıköy") || dist.toLowerCase().includes("kadikoy");
+            showThis = /kadıköy|kadikoy/i.test(dist);
         }
         else if (city === "ankara") {
-            showThis = dist.toLowerCase().includes("çankaya") || dist.toLowerCase().includes("cankaya");
+            showThis = /çankaya|cankaya/i.test(dist);
         }
         else if (city === "izmir") {
-            showThis = dist.toLowerCase().includes("konak");
+            showThis = /konak/i.test(dist);
         }
 
         if (!showThis) return;
@@ -236,7 +238,7 @@ function renderPharmacies(list, city){
 
         const mapUrl = e.loc 
             ? `https://www.google.com/maps/search/?api=1&query=${e.loc}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + " " + address)}`;
 
         listDiv.innerHTML += `
         <div class="card">
@@ -262,14 +264,12 @@ function renderPharmacies(list, city){
         </div>`;
     });
 
-    // Hiç eczane gösterilemediyse ilk 5 tanesini göster (güvenlik)
     if (count === 0 && list.length > 0) {
         list.slice(0, 5).forEach(e => {
-            // ... aynı kart yapısı (kodu kısaltmak için burada tekrar yazmadım)
             const name = (e.name || "Eczane").toUpperCase();
             const address = e.address || "Adres yok";
             const phone = e.phone || "Telefon yok";
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + " " + address)}`;
 
             listDiv.innerHTML += `
             <div class="card">
