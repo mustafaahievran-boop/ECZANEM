@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nöbetçi Eczane Canlı</title>
+    <title>Nöbetçi Eczane</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --red: #d63031; --bg: #f5f6fa; }
@@ -134,12 +134,11 @@
         </select>
     </div>
 
-    <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Çekiliyor...</div>
+    <div id="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Canlı Veriler Sorgulanıyor...</div>
     <div id="list"></div>
 </div>
 
 <script>
-    // Sizin çalışan sorunsuz API anahtarınız
     const API_KEY = "apikey 4fSr6xIhOHxg0vHDbeJ8JG:2gLQOsj3tHEIR1wIGWKzi6"; 
 
     const dateDiv = document.getElementById('today');
@@ -155,7 +154,6 @@
         }
     });
 
-    // Otomatik konum bulma fonksiyonunuz (Orijinal haliyle korundu)
     async function init() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -191,7 +189,6 @@
         listDiv.innerHTML = "";
 
         try {
-            // Asıl çalışan API sorgunuz
             const response = await fetch(`https://api.collectapi.com/health/dutyPharmacy?il=${city}`, {
                 method: 'GET',
                 headers: {
@@ -204,69 +201,14 @@
             loader.style.display = "none";
 
             if (result.success && result.result) {
-                let eczaneListesi = result.result;
-
-                // EĞER KIRŞEHİR SEÇİLİYSE: Merkez eksik mi diye bakıp akıllı kurtarmayı devreye alıyoruz
-                if (city === "kirsehir") {
-                    const merkezEczaneleri = eczaneListesi.filter(e => {
-                        const d = (e.dist || "").toLowerCase();
-                        const a = (e.address || "").toLowerCase();
-                        return d.includes("merkez") || a.includes("merkez");
-                    });
-
-                    // Eğer API Kırşehir Merkez'i boş/eski getirdiyse resmi odaya arka plan köprüsü kur
-                    if (merkezEczaneleri.length === 0) {
-                        renderWithOdaFallback(eczaneListesi);
-                        return;
-                    }
-                }
-
-                // Genel Sıralama: Merkez olanları en üste topla (Tüm şehirler için geçerli)
-                siralaVeGoster(eczaneListesi);
+                renderPharmacies(result.result);
             } else {
-                showError("Veriler şu anda yüklenemedi. Lütfen API kotanızı kontrol edin.");
+                showError("Veriler yüklenemedi.");
             }
-
         } catch (error) {
             loader.style.display = "none";
             showError("Bağlantı hatası oluştu.");
         }
-    }
-
-    // Sadece Kırşehir Merkez çöktüğünde tetiklenen koruma köprüsü
-    async function renderWithOdaFallback(apiData) {
-        try {
-            const response = await fetch('https://api.teb.org.tr/net/nobetci-eczaneler?sehir=39');
-            const odaData = await response.json();
-            
-            if (odaData && odaData.length > 0) {
-                const duzeltilmisOda = odaData.map(o => ({
-                    name: o.eczane_adi || o.name,
-                    address: o.adres || o.address,
-                    phone: o.telefon || o.phone,
-                    dist: "Merkez"
-                }));
-                // Taze Merkez verileri ile API'deki doğru ilçe verilerini birleştir
-                siralaVeGoster([...duzeltilmisOda, ...apiData]);
-            } else {
-                siralaVeGoster(apiData);
-            }
-        } catch (e) {
-            siralaVeGoster(apiData);
-        }
-    }
-
-    function siralaVeGoster(liste) {
-        const sirali = liste.sort((a, b) => {
-            const distA = (a.dist || "").toLowerCase();
-            const distB = (b.dist || "").toLowerCase();
-            const isCenterA = distA.includes("merkez") || (a.address || "").toLowerCase().includes("merkez");
-            const isCenterB = distB.includes("merkez") || (b.address || "").toLowerCase().includes("merkez");
-            if (isCenterA && !isCenterB) return -1;
-            if (!isCenterA && isCenterB) return 1;
-            return 0;
-        });
-        renderPharmacies(sirali);
     }
 
     function renderPharmacies(list) {
@@ -276,13 +218,34 @@
             return;
         }
 
-        // Çift kayıt çıkmasını engeller
-        const benzersizList = list.filter((v, i, a) => a.findIndex(t => (t.name.toUpperCase().trim() === v.name.toUpperCase().trim())) === i);
-
-        benzersizList.forEach(e => {
+        list.forEach(e => {
             const dist = (e.dist || "").toLowerCase();
             const addr = (e.address || "").toLowerCase();
             const isCenter = dist.includes("merkez") || addr.includes("merkez") || dist === "";
             
             const cardClass = isCenter ? "card center-pharmacy" : "card";
-            const ilceAdi = (e.dist || "MERKEZ").toUpperCase();
+            const badgeText = isCenter ? `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>` : "";
+            
+            const mapUrl = `maps.google.com/?q=${encodeURIComponent(e.name + ' ' + e.address)}`;
+
+            listDiv.innerHTML += `
+                <div class="${cardClass}">
+                    <h2>${e.name} ${badgeText}</h2>
+                    <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
+                    <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
+                    <div class="btn-group">
+                        <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
+                        <a href="https://${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function showError(msg) {
+        listDiv.innerHTML = `<div class="error-card"><p>${msg}</p></div>`;
+    }
+
+    init();
+</script>
+</body>
+</html>
