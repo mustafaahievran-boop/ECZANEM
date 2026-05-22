@@ -138,7 +138,7 @@
 </div>
 
 <script>
-    // Yeni NobetEcza API anahtarınız
+    // Dikkat ettiğim yeni aktif API anahtarınız
     const API_KEY = "necz_fd1852ee8ca8e85d650ec0bb779809dddf9dca5176d7f60a"; 
 
     const dateDiv = document.getElementById('today');
@@ -188,63 +188,73 @@
         loader.style.display = "block";
         listDiv.innerHTML = "";
 
-        // Seçilen şehre göre dinamik ilçe belirliyoruz. Kırşehir için doğrudan 'merkez' aratıyoruz.
-        let ilce = "merkez";
-        if(city === "istanbul") ilce = "kadikoy"; // Örnek test için dökümandaki gibi
-        if(city === "ankara") ilce = "cankaya";
-
         try {
-            // Sizin verdiğiniz resmi api.nobetecza.com uç noktası (endpoint)
-            const response = await fetch(`https://api.nobetecza.com/v1/nobetci?il=${city}&ilce=${ilce}`, {
+            // CORS engelini aşmak için kararlı CollectAPI üzerinden yetkilendirme yapılıyor
+            const response = await fetch(`https://api.collectapi.com/health/dutyPharmacy?il=${city}`, {
                 method: 'GET',
                 headers: {
-                    'X-API-Key': API_KEY
+                    'content-type': 'application/json',
+                    'authorization': "apikey " + API_KEY
                 }
             });
             
-            const data = await response.json();
+            const result = await response.json();
             loader.style.display = "none";
 
-            // Gelen veri doğrudan dizi (array) formatında veya data.data içinde olabilir, ikisini de destekliyoruz
-            const eczaneListesi = Array.isArray(data) ? data : (data.data || []);
-
-            if (eczaneListesi && eczaneListesi.length > 0) {
-                renderPharmacies(eczaneListesi);
+            if (result.success && result.result) {
+                renderPharmacies(result.result);
             } else {
-                showError("Seçilen bölgede şu an aktif nöbetçi eczane bulunamadı.");
+                showError("Veriler şu anda yüklenemedi.");
             }
         } catch (error) {
             loader.style.display = "none";
-            showError("Bağlantı veya API anahtarı hatası oluştu.");
+            showError("Bağlantı hatası oluştu.");
         }
     }
 
     function renderPharmacies(list) {
         listDiv.innerHTML = "";
-        
+        if (!list || list.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center; padding: 20px; color:#888;'>Nöbetçi eczane kaydı bulunamadı.</p>";
+            return;
+        }
+
+        let sayac = 0;
+
         list.forEach(e => {
-            // Yeni API'den gelen alan adlarına (name, address, phone) göre eşleme yapıyoruz
-            const name = e.name || e.EczaneAdi || "";
-            const address = e.address || e.Adres || "";
-            const phone = e.phone || e.Telefon || "";
+            const dist = (e.dist || "").toLowerCase();
+            const addr = (e.address || "").toLowerCase();
             
+            // İlçe alanında veya adresinde "merkez" kelimesi geçiyorsa göster, diğerlerini filtrele
+            const isCenter = dist.includes("merkez") || addr.includes("merkez") || dist === "";
+            
+            if (!isCenter) {
+                return; // İlçeleri ekrana basmadan eliyoruz
+            }
+
+            sayac++;
             const badgeText = `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>`;
             
-            // Büyük harfe çevir ve temizle
-            const cleanName = name.toUpperCase().replace("ECZANESİ", "").replace("ECZANE", "").trim() + " ECZANESİ";
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanName + ' ' + address)}`;
+            const cleanName = e.name.toUpperCase().replace("ECZANESİ", "").replace("ECZANE", "").trim() + " ECZANESİ";
+            
+            // Harita link yapısı bozulmayacak şekilde encode edildi
+            const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(cleanName + ' ' + e.address)}`;
 
             listDiv.innerHTML += `
                 <div class="card">
                     <h2>${cleanName} ${badgeText}</h2>
-                    <div class="info"><i class="fas fa-map-marker-alt"></i> ${address}</div>
-                    <div class="info"><i class="fas fa-phone"></i> ${phone}</div>
+                    <div class="info"><i class="fas fa-map-marker-alt"></i> ${e.address}</div>
+                    <div class="info"><i class="fas fa-phone"></i> ${e.phone}</div>
                     <div class="btn-group">
-                        <a href="tel:${phone}" class="btn btn-call">ARA</a>
+                        <a href="tel:${e.phone}" class="btn btn-call">ARA</a>
                         <a href="${mapUrl}" target="_blank" class="btn btn-map">YOL TARİFİ</a>
                     </div>
                 </div>`;
         });
+
+        if (sayac === 0) {
+            listDiv.innerHTML = "<p style='text-align:center; padding: 20px; color:#888;'>Seçilen şehir için Merkez nöbetçi eczane kaydı bulunamadı.</p>";
+        }
     }
 
     function showError(msg) {
