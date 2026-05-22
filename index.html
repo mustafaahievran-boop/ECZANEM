@@ -212,7 +212,7 @@
                 finalData = result.result;
             }
 
-            // Eğer seçilen il Kırşehir ise ve API merkez eczanelerini getiremediyse yedek verileri başa ekle
+            // Eğer seçilen il Kırşehir ise ve API merkez eczanelerini getiremediyse yedek verileri başa enjekte et
             if (city === "kirsehir") {
                 const hasArikan = finalData.some(e => e.name && e.name.toUpperCase().includes("ARIKAN"));
                 if (!hasArikan) {
@@ -224,6 +224,7 @@
 
         } catch (error) {
             loader.style.display = "none";
+            // Bağlantı kopsa bile Kırşehir seçiliyse lokal listeyi göstererek kullanıcıyı yarı yolda bırakma
             if (city === "kirsehir") {
                 renderPharmacies(fallbackKirsehirCenter);
             } else {
@@ -240,7 +241,7 @@
         }
 
         list.forEach(e => {
-            // Güvenli Merkez kontrolü
+            // Harf duyarlılığından (Merkez, merkez, MERKEZ) kaçınmak için veriyi küçük harfe indirgeyerek arıyoruz
             const itemDist = e.dist ? e.dist.toLowerCase() : "";
             const itemAddr = e.address ? e.address.toLowerCase() : "";
             const isCenter = itemDist.includes("merkez") || itemAddr.includes("merkez");
@@ -248,7 +249,7 @@
             const cardClass = isCenter ? "card center-pharmacy" : "card";
             const badgeText = isCenter ? `<span style="font-size:0.75rem; color:#27ae60; font-weight:bold; float:right;"><i class="fas fa-star"></i> MERKEZ</span>` : "";
 
-            // Google Haritalar link formatı düzeltildi
+            // Orijinal kodda çökme yaratan 0{encodeURIComponent...} syntax hatası giderildi.
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.name + ' ' + e.address)}`;
 
             listDiv.innerHTML += `
